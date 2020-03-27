@@ -1,0 +1,21 @@
+environments:
+  development:
+    apps:
+      - name: my-app-1
+        services:
+          - name: app-1-service-http
+          - name: app-1-service-metrics
+      - name: my-app-2
+        services:
+          - name: app-2-service
+  staging:
+    apps:
+      - name: my-app-1
+        services:
+          - name: app-1-service-http
+  production:
+    apps:
+      - name: my-app-1
+        services:
+          - name: app-1-service-http
+          - name: app-1-service-metrics
