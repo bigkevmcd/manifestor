@@ -6,20 +6,27 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type Repository struct {
+	SourceURL string `yaml:"url"`
+	Ref       string `yaml:"ref"`
+	Path      string `yaml:"path"`
+}
+
 type Service struct {
-	Name string `json:"name"`
+	Name string      `yaml:"name"`
+	Repo *Repository `yaml:"repo"`
 }
 
 type Application struct {
-	Name     string     `json:"name"`
-	Services []*Service `json:"services"`
+	Name     string     `yaml:"name"`
+	Services []*Service `yaml:"services"`
 }
 
 type Environment struct {
-	Apps []*Application `json:"apps"`
+	Apps []*Application `yaml:"apps"`
 }
 type Manifest struct {
-	Environments map[string]*Environment `json:"environments"`
+	Environments map[string]*Environment `yaml:"environments"`
 }
 
 // Parse decodes YAML describing an environment manifest.

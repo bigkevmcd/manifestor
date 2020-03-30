@@ -39,7 +39,7 @@ func Bootstrap(prefix string, m *manifest.Manifest) error {
 	}
 	for k, v := range environmentFiles(appNames) {
 		filename := filepath.Join("env", k)
-		err := writeWithPrefix(prefix, filename, v)
+		err := writeWithPrefix(prefix, name, filename, v)
 		if err != nil {
 			return err
 		}
@@ -145,9 +145,10 @@ func manifestPaths(man *manifest.Manifest) []string {
 			}
 			appNames = append(appNames, app.Name)
 		}
-	}
-	for k, _ := range environmentFiles(appNames) {
-		files = append(files, filepath.Join("env", k))
+		for k, _ := range environmentFiles(appNames) {
+			files = append(files, filepath.Join(name, "env", k))
+		}
+
 	}
 	return files
 }

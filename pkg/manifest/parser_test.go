@@ -46,7 +46,12 @@ func TestParse(t *testing.T) {
 						&Application{Name: "my-app-1",
 							Services: []*Service{
 								&Service{Name: "app-1-service-http"},
-								&Service{Name: "app-1-service-metrics"},
+								&Service{Name: "app-1-service-metrics", Repo: &Repository{
+									SourceURL: "https://github.com/testing/testing",
+									Ref:       "master",
+									Path:      "config",
+								},
+								},
 							},
 						},
 					},

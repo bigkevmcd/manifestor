@@ -19,3 +19,7 @@ environments:
         services:
           - name: app-1-service-http
           - name: app-1-service-metrics
+            repo:
+              url: https://github.com/testing/testing
+              ref: master
+              path: config
