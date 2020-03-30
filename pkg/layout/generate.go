@@ -46,8 +46,23 @@ func appKustomization(services []string) map[string]interface{} {
 	}
 }
 
+func environmentFiles(apps []string) map[string]interface{} {
+	overlayPaths := make([]string, len(apps))
+	for i, a := range apps {
+		overlayPaths[i] = fmt.Sprintf("../../../apps/%s/overlays", a)
+	}
+	return map[string]interface{}{
+		"base/kustomization.yaml": map[string]interface{}{
+			"bases": overlayPaths,
+		},
+		"overlays/kustomization.yaml": []string{"../base"},
+	}
+
+}
+
 func manifestPaths(man *manifest.Manifest) []string {
 	files := []string{}
+	appNames := []string{}
 	for name, env := range man.Environments {
 		for _, app := range env.Apps {
 			serviceNames := []string{}
@@ -60,7 +75,11 @@ func manifestPaths(man *manifest.Manifest) []string {
 			for k, _ := range appKustomization(serviceNames) {
 				files = append(files, filepath.Join(name, "apps", app.Name, k))
 			}
+			appNames = append(appNames, app.Name)
 		}
+	}
+	for k, _ := range environmentFiles(appNames) {
+		files = append(files, filepath.Join("env", k))
 	}
 	return files
 }
