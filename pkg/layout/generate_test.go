@@ -1,4 +1,4 @@
-package layout_test
+package layout
 
 import (
 	"io/ioutil"
@@ -12,19 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func manifestPaths(man *manifest.Manifest) []string {
-	files := []string{}
-	for name, env := range man.Environments {
-		for _, app := range env.Apps {
-			for _, svc := range app.Services {
-				files = append(files, filepath.Join(name, app.Name, svc.Name))
-			}
-		}
-	}
-	return files
-}
-
-func TestGenerate(t *testing.T) {
+func TestManifestPaths(t *testing.T) {
 	m := &manifest.Manifest{
 		Environments: map[string]*manifest.Environment{
 			"development": &manifest.Environment{
@@ -33,6 +21,7 @@ func TestGenerate(t *testing.T) {
 						Name: "my-app-1",
 						Services: []*manifest.Service{
 							&manifest.Service{Name: "app-1-service-http"},
+							&manifest.Service{Name: "app-1-service-test"},
 						},
 					},
 					&manifest.Application{
@@ -47,7 +36,7 @@ func TestGenerate(t *testing.T) {
 				Apps: []*manifest.Application{
 					&manifest.Application{Name: "my-app-1",
 						Services: []*manifest.Service{
-							&manifest.Service{Name: "app-1-service-http"},
+							&manifest.Service{Name: "app-1-service-user"},
 						},
 					},
 				},
@@ -58,10 +47,26 @@ func TestGenerate(t *testing.T) {
 	paths := manifestPaths(m)
 	sort.Strings(paths)
 	want := []string{
-		"development/my-app-1/app-1-service-http",
-		"development/my-app-2/app-2-service",
-		"staging/my-app-1/app-1-service-http",
+		"development/apps/my-app-1/base/kustomization.yaml",
+		"development/apps/my-app-1/overlays/kustomization.yaml",
+		"development/apps/my-app-2/base/kustomization.yaml",
+		"development/apps/my-app-2/overlays/kustomization.yaml",
+		"development/services/app-1-service-http/base/config/kustomization.yaml",
+		"development/services/app-1-service-http/base/kustomization.yaml",
+		"development/services/app-1-service-http/overlays/kustomization.yaml",
+		"development/services/app-1-service-test/base/config/kustomization.yaml",
+		"development/services/app-1-service-test/base/kustomization.yaml",
+		"development/services/app-1-service-test/overlays/kustomization.yaml",
+		"development/services/app-2-service/base/config/kustomization.yaml",
+		"development/services/app-2-service/base/kustomization.yaml",
+		"development/services/app-2-service/overlays/kustomization.yaml",
+		"staging/apps/my-app-1/base/kustomization.yaml",
+		"staging/apps/my-app-1/overlays/kustomization.yaml",
+		"staging/services/app-1-service-user/base/config/kustomization.yaml",
+		"staging/services/app-1-service-user/base/kustomization.yaml",
+		"staging/services/app-1-service-user/overlays/kustomization.yaml",
 	}
+
 	if diff := cmp.Diff(want, paths); diff != "" {
 		t.Fatalf("tree files: %s", diff)
 	}
