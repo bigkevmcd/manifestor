@@ -10,10 +10,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func Bootstrap(path string, m *manifest.Manifest) error {
-	return nil
-}
-
 func TestBootstrap(t *testing.T) {
 	tempDir, cleanup := makeTempDir(t)
 	defer cleanup()

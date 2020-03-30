@@ -1,0 +1,6 @@
+environments:
+  development:
+    apps:
+      - name: app-1
+        services:
+          - name: service-a
