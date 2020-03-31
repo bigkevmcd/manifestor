@@ -3,24 +3,25 @@ package layout
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 
-	"github.com/bigkevmcd/manifestor/pkg/manifest"
 	"github.com/google/go-cmp/cmp"
 )
 
 func TestBootstrap(t *testing.T) {
 	tempDir, cleanup := makeTempDir(t)
 	defer cleanup()
-	m := &manifest.Manifest{
-		Environments: map[string]*manifest.Environment{
-			"development": &manifest.Environment{
-				Apps: []*manifest.Application{
-					&manifest.Application{
+	m := &Manifest{
+		Environments: map[string]*Environment{
+			"development": &Environment{
+				Apps: []*Application{
+					&Application{
 						Name: "my-app-1",
-						Services: []*manifest.Service{
-							&manifest.Service{Name: "app-1-service-http"},
+						Services: []*Service{
+							&Service{Name: "app-1-service-http"},
 						},
 					},
 				},
@@ -30,75 +31,40 @@ func TestBootstrap(t *testing.T) {
 
 	err := Bootstrap(tempDir, m)
 	assertNoError(t, err)
-}
 
-func TestManifestPaths(t *testing.T) {
-	m := &manifest.Manifest{
-		Environments: map[string]*manifest.Environment{
-			"development": &manifest.Environment{
-				Apps: []*manifest.Application{
-					&manifest.Application{
-						Name: "my-app-1",
-						Services: []*manifest.Service{
-							&manifest.Service{Name: "app-1-service-http"},
-							&manifest.Service{Name: "app-1-service-test"},
-						},
-					},
-					&manifest.Application{
-						Name: "my-app-2",
-						Services: []*manifest.Service{
-							&manifest.Service{Name: "app-2-service"},
-						},
-					},
-				},
-			},
-			"staging": &manifest.Environment{
-				Apps: []*manifest.Application{
-					&manifest.Application{Name: "my-app-1",
-						Services: []*manifest.Service{
-							&manifest.Service{Name: "app-1-service-user"},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	paths := manifestPaths(m)
-	sort.Strings(paths)
+	files := walkTree(t, tempDir)
+	sort.Strings(files)
 	want := []string{
-		"development/apps/my-app-1/base/kustomization.yaml",
-		"development/apps/my-app-1/overlays/kustomization.yaml",
-		"development/apps/my-app-2/base/kustomization.yaml",
-		"development/apps/my-app-2/overlays/kustomization.yaml",
-		"development/env/base/kustomization.yaml",
-		"development/env/overlays/kustomization.yaml",
-		"development/services/app-1-service-http/base/config/kustomization.yaml",
-		"development/services/app-1-service-http/base/kustomization.yaml",
-		"development/services/app-1-service-http/overlays/kustomization.yaml",
-		"development/services/app-1-service-test/base/config/kustomization.yaml",
-		"development/services/app-1-service-test/base/kustomization.yaml",
-		"development/services/app-1-service-test/overlays/kustomization.yaml",
-		"development/services/app-2-service/base/config/kustomization.yaml",
-		"development/services/app-2-service/base/kustomization.yaml",
-		"development/services/app-2-service/overlays/kustomization.yaml",
-		"staging/apps/my-app-1/base/kustomization.yaml",
-		"staging/apps/my-app-1/overlays/kustomization.yaml",
-		"staging/env/base/kustomization.yaml",
-		"staging/env/overlays/kustomization.yaml",
-		"staging/services/app-1-service-user/base/config/kustomization.yaml",
-		"staging/services/app-1-service-user/base/kustomization.yaml",
-		"staging/services/app-1-service-user/overlays/kustomization.yaml",
+		"/development",
+		"/development/apps",
+		"/development/apps/my-app-1",
+		"/development/apps/my-app-1/base",
+		"/development/apps/my-app-1/base/kustomization.yaml",
+		"/development/apps/my-app-1/overlays",
+		"/development/apps/my-app-1/overlays/kustomization.yaml",
+		"/development/env",
+		"/development/env/base",
+		"/development/env/base/kustomization.yaml",
+		"/development/env/overlays",
+		"/development/env/overlays/kustomization.yaml",
+		"/development/services",
+		"/development/services/app-1-service-http",
+		"/development/services/app-1-service-http/base",
+		"/development/services/app-1-service-http/base/config",
+		"/development/services/app-1-service-http/base/config/kustomization.yaml",
+		"/development/services/app-1-service-http/base/kustomization.yaml",
+		"/development/services/app-1-service-http/overlays",
+		"/development/services/app-1-service-http/overlays/kustomization.yaml",
 	}
 
-	if diff := cmp.Diff(want, paths); diff != "" {
-		t.Fatalf("tree files: %s", diff)
+	if diff := cmp.Diff(want, files); diff != "" {
+		t.Errorf("bootstrap failed diff\n%s", diff)
 	}
 }
 
 func makeTempDir(t *testing.T) (string, func()) {
 	t.Helper()
-	dir, err := ioutil.TempDir(os.TempDir(), "gnome")
+	dir, err := ioutil.TempDir(os.TempDir(), "manifest")
 	assertNoError(t, err)
 	return dir, func() {
 		err := os.RemoveAll(dir)
@@ -111,4 +77,16 @@ func assertNoError(t *testing.T, err error) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func walkTree(t *testing.T, start string) []string {
+	walked := []string{}
+	filepath.Walk(start, func(path string, info os.FileInfo, err error) error {
+		trimmed := strings.TrimPrefix(path, start)
+		if trimmed != "" {
+			walked = append(walked, trimmed)
+		}
+		return err
+	})
+	return walked
 }

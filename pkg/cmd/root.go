@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/bigkevmcd/manifestor/pkg/layout"
-	"github.com/bigkevmcd/manifestor/pkg/manifest"
 )
 
 func init() {
@@ -26,7 +25,7 @@ var rootCmd = &cobra.Command{
 		}
 		defer f.Close()
 
-		m, err := manifest.Parse(f)
+		m, err := layout.Parse(f)
 		if err != nil {
 			log.Fatal(err)
 		}

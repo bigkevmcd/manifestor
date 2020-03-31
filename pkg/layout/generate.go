@@ -6,19 +6,18 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/bigkevmcd/manifestor/pkg/manifest"
 	"gopkg.in/yaml.v2"
 )
 
 // Bootstrap takes a manifest and a prefix, and writes the files from the manifest
-// to starting with the prefix.
-func Bootstrap(prefix string, m *manifest.Manifest) error {
+// starting with the prefix.
+func Bootstrap(prefix string, m *Manifest) error {
 	appNames := []string{}
-	for name, env := range m.Environments {
+	for envName, env := range m.Environments {
 		for _, app := range env.Apps {
 			serviceNames := []string{}
 			for _, svc := range app.Services {
-				servicePath := filepath.Join(name, "services", svc.Name)
+				servicePath := filepath.Join(envName, "services", svc.Name)
 				for f, v := range filesForService() {
 					filename := filepath.Join(servicePath, f)
 					err := writeWithPrefix(prefix, filename, v)
@@ -28,7 +27,7 @@ func Bootstrap(prefix string, m *manifest.Manifest) error {
 				}
 			}
 			for k, v := range appKustomization(serviceNames) {
-				filename := filepath.Join(name, "apps", app.Name, k)
+				filename := filepath.Join(envName, "apps", app.Name, k)
 				err := writeWithPrefix(prefix, filename, v)
 				if err != nil {
 					return err
@@ -36,12 +35,12 @@ func Bootstrap(prefix string, m *manifest.Manifest) error {
 			}
 			appNames = append(appNames, app.Name)
 		}
-	}
-	for k, v := range environmentFiles(appNames) {
-		filename := filepath.Join("env", k)
-		err := writeWithPrefix(prefix, name, filename, v)
-		if err != nil {
-			return err
+		for k, v := range environmentFiles(appNames) {
+			filename := filepath.Join(envName, "env", k)
+			err := writeWithPrefix(prefix, filename, v)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -125,30 +124,4 @@ func environmentFiles(apps []string) map[string]interface{} {
 		},
 		"overlays/kustomization.yaml": []string{"../base"},
 	}
-
-}
-
-func manifestPaths(man *manifest.Manifest) []string {
-	files := []string{}
-	appNames := []string{}
-	for name, env := range man.Environments {
-		for _, app := range env.Apps {
-			serviceNames := []string{}
-			for _, svc := range app.Services {
-				servicePath := filepath.Join(name, "services", svc.Name)
-				for f, _ := range filesForService() {
-					files = append(files, filepath.Join(servicePath, f))
-				}
-			}
-			for k, _ := range appKustomization(serviceNames) {
-				files = append(files, filepath.Join(name, "apps", app.Name, k))
-			}
-			appNames = append(appNames, app.Name)
-		}
-		for k, _ := range environmentFiles(appNames) {
-			files = append(files, filepath.Join(name, "env", k))
-		}
-
-	}
-	return files
 }
