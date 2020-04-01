@@ -1,12 +1,14 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"sigs.k8s.io/yaml"
 
+	"github.com/bigkevmcd/manifestor/pkg/eventlistener"
 	"github.com/bigkevmcd/manifestor/pkg/layout"
 )
 
@@ -14,10 +16,10 @@ func init() {
 	cobra.OnInitialize(initConfig)
 }
 
-func makeRootCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "manifestor",
-		Short: "update a repository based on a manifest",
+func makeEventListenerCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "eventlistener",
+		Short: "generate an eventlistener",
 		Args:  cobra.MinimumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			f, err := os.Open(args[0])
@@ -31,22 +33,12 @@ func makeRootCommand() *cobra.Command {
 				log.Fatal(err)
 			}
 
-			err = layout.Bootstrap(args[1], m)
+			el := eventlistener.GenerateEventListener(args[1], m)
+			b, err := yaml.Marshal(el)
 			if err != nil {
 				log.Fatal(err)
 			}
+			fmt.Printf("%s\n", b)
 		},
-	}
-	cmd.AddCommand(makeEventListenerCommand())
-	return cmd
-}
-
-func initConfig() {
-	viper.AutomaticEnv()
-}
-
-func Execute() {
-	if err := makeRootCommand().Execute(); err != nil {
-		log.Fatal(err)
 	}
 }

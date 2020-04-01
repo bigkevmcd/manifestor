@@ -1,5 +1,5 @@
 environments:
-  - name: development:
+  - name: development
     apps:
       - name: app-1
         services:

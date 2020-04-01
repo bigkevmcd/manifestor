@@ -13,15 +13,22 @@ func TestParse(t *testing.T) {
 		filename string
 		want     *Manifest
 	}{
-		{"testdata/example1.yaml", &Manifest{
+		{"../testdata/example1.yaml", &Manifest{
 			Environments: []*Environment{
 				&Environment{
 					Name: "development",
+					Pipelines: &Pipelines{
+						Integration: "dev-ci-pipeline",
+						Deployment:  "dev-cd-pipeline",
+					},
 					Apps: []*Application{
 						&Application{
 							Name: "my-app-1",
 							Services: []*Service{
-								&Service{Name: "app-1-service-http"},
+								&Service{
+									Name:      "app-1-service-http",
+									SourceURL: "https://github.com/myproject/myservice.git",
+								},
 								&Service{Name: "app-1-service-metrics"},
 							},
 						},
@@ -49,10 +56,10 @@ func TestParse(t *testing.T) {
 						&Application{Name: "my-app-1",
 							Services: []*Service{
 								&Service{Name: "app-1-service-http"},
-								&Service{Name: "app-1-service-metrics", Repo: &Repository{
-									SourceURL: "https://github.com/testing/testing",
-									Ref:       "master",
-									Path:      "config",
+								&Service{Name: "app-1-service-metrics", ConfigRepo: &Repository{
+									URL:  "https://github.com/testing/testing",
+									Ref:  "master",
+									Path: "config",
 								},
 								},
 							},
