@@ -36,8 +36,15 @@ type Repository struct {
 //
 // These pipelines will be executed with a Git clone URL and commit SHA.
 type Pipelines struct {
-	Integration string `yaml:"integration"`
-	Deployment  string `yaml:"deployment"`
+	Integration *TemplateBinding `yaml:"integration"`
+	Deployment  *TemplateBinding `yaml:"deployment"`
+}
+
+// TemplateBinding is a combination of the template and binding to be used for a
+// pipeline execution.
+type TemplateBinding struct {
+	Template string `yaml:"template"`
+	Binding  string `yaml:"binding"`
 }
 
 // Walk implements post-node visiting of each element in the manifest.

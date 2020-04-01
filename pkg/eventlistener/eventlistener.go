@@ -28,10 +28,10 @@ func GenerateEventListener(n string, m *layout.Manifest) *triggersv1.EventListen
 }
 
 func makeEventListenerTriggers(m *layout.Manifest) []triggersv1.EventListenerTrigger {
-	l, _ := parseManifest(m)
+	l, _ := extractServices(m)
 	triggers := make([]triggersv1.EventListenerTrigger, len(l))
 	for i, s := range l {
-		triggers[i] = createListenerTrigger(s.Name, ciFilter, s.RepoName, s.CI, s.CD)
+		triggers[i] = createListenerTrigger(s.Name, ciFilter, s.RepoName, s.CI.Binding, s.CI.Template)
 	}
 	return triggers
 }
@@ -40,21 +40,24 @@ type serviceVisitor struct {
 	services []service
 }
 
-// TODO: DO NOT PANIC!
-func extractRepo(u string) string {
+func extractRepo(u string) (string, error) {
 	parsed, err := url.Parse(u)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	parts := strings.Split(parsed.Path, "/")
-	return fmt.Sprintf("%s/%s", parts[1], parts[2])
+	return fmt.Sprintf("%s/%s", parts[1], parts[2]), nil
 }
 
 func (ev *serviceVisitor) Service(env *layout.Environment, app *layout.Application, svc *layout.Service) error {
 	if svc.SourceURL == "" {
 		return nil
 	}
-	ev.services = append(ev.services, service{extractRepo(svc.SourceURL), fmt.Sprintf("%s-%s", app.Name, svc.Name), env.Name, env.Pipelines.Integration, env.Pipelines.Deployment})
+	repo, err := extractRepo(svc.SourceURL)
+	if err != nil {
+		return err
+	}
+	ev.services = append(ev.services, service{repo, fmt.Sprintf("%s-%s", app.Name, svc.Name), env.Name, env.Pipelines.Integration, env.Pipelines.Deployment})
 	return nil
 }
 
@@ -70,11 +73,11 @@ type service struct {
 	RepoName string
 	Name     string
 	Env      string
-	CI       string
-	CD       string
+	CI       *layout.TemplateBinding
+	CD       *layout.TemplateBinding
 }
 
-func parseManifest(m *layout.Manifest) ([]service, error) {
+func extractServices(m *layout.Manifest) ([]service, error) {
 	l := &serviceVisitor{services: []service{}}
 	m.Walk(l)
 	return l.services, nil

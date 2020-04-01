@@ -1,16 +1,17 @@
 environments:
   - name: development
     pipelines:
-      integration: dev-ci-pipeline
-      deployment: dev-cd-pipeline
+      integration:
+        template: dev-ci-template
+        binding: dev-ci-binding
+      deployment:
+        template: dev-cd-template
+        binding: dev-cd-binding
     apps:
       - name: my-app-1
         services:
           - name: app-1-service-http
             source_url: https://github.com/myproject/myservice.git
-            pipelines:
-              integration: dev-java-pipeline
-              integration: dev-java-deployment-pipeline
           - name: app-1-service-metrics
       - name: my-app-2
         services:

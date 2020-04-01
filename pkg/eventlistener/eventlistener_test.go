@@ -14,8 +14,14 @@ var testManifest = &layout.Manifest{
 		&layout.Environment{
 			Name: "development",
 			Pipelines: &layout.Pipelines{
-				Integration: "test-ci",
-				Deployment:  "test-cd",
+				Integration: &layout.TemplateBinding{
+					Template: "dev-ci-template",
+					Binding:  "dev-ci-binding",
+				},
+				Deployment: &layout.TemplateBinding{
+					Template: "dev-cd-template",
+					Binding:  "dev-cd-binding",
+				},
 			},
 			Apps: []*layout.Application{
 				&layout.Application{
@@ -32,9 +38,20 @@ var testManifest = &layout.Manifest{
 	},
 }
 
-func TestParseManifest(t *testing.T) {
-	want := []service{{"testing/testing", "my-app-1-app-1-service-http", "development", "test-ci", "test-cd"}}
-	l, err := parseManifest(testManifest)
+func TestExtractServices(t *testing.T) {
+	want := []service{
+		{"testing/testing", "my-app-1-app-1-service-http", "development",
+			&layout.TemplateBinding{
+				Template: "dev-ci-template",
+				Binding:  "dev-ci-binding",
+			},
+			&layout.TemplateBinding{
+				Template: "dev-cd-template",
+				Binding:  "dev-cd-binding",
+			},
+		},
+	}
+	l, err := extractServices(testManifest)
 	assertNoError(t, err)
 
 	if diff := cmp.Diff(want, l); diff != "" {
@@ -57,11 +74,13 @@ func TestGenerateEventListener(t *testing.T) {
 				triggersv1.EventListenerTrigger{
 					Bindings: []*triggersv1.EventListenerBinding{
 						&triggersv1.EventListenerBinding{
-							Name: "test-ci",
+							Name: "dev-ci-binding",
 						},
 					},
-					Template: triggersv1.EventListenerTemplate{Name: "test-cd"},
-					Name:     "my-app-1-app-1-service-http",
+					Template: triggersv1.EventListenerTemplate{
+						Name: "dev-ci-template",
+					},
+					Name: "my-app-1-app-1-service-http",
 					Interceptors: []*triggersv1.EventInterceptor{
 						&triggersv1.EventInterceptor{
 							CEL: &triggersv1.CELInterceptor{
