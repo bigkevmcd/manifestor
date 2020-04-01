@@ -29,21 +29,21 @@ type Repository struct {
 
 func (m Manifest) Walk(visitor ManifestVisitor) error {
 	for _, env := range m.Environments {
-		err := visitor.Environment(env)
-		if err != nil {
-			return err
-		}
 		for _, app := range env.Apps {
-			err := visitor.Application(env, app)
-			if err != nil {
-				return err
-			}
 			for _, svc := range app.Services {
 				err := visitor.Service(env, app, svc)
 				if err != nil {
 					return err
 				}
 			}
+			err := visitor.Application(env, app)
+			if err != nil {
+				return err
+			}
+		}
+		err := visitor.Environment(env)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
