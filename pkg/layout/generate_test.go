@@ -15,8 +15,9 @@ func TestBootstrap(t *testing.T) {
 	tempDir, cleanup := makeTempDir(t)
 	defer cleanup()
 	m := &Manifest{
-		Environments: map[string]*Environment{
-			"development": &Environment{
+		Environments: []*Environment{
+			&Environment{
+				Name: "development",
 				Apps: []*Application{
 					&Application{
 						Name: "my-app-1",

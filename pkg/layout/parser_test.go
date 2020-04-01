@@ -14,8 +14,9 @@ func TestParse(t *testing.T) {
 		want     *Manifest
 	}{
 		{"testdata/example1.yaml", &Manifest{
-			Environments: map[string]*Environment{
-				"development": &Environment{
+			Environments: []*Environment{
+				&Environment{
+					Name: "development",
 					Apps: []*Application{
 						&Application{
 							Name: "my-app-1",
@@ -32,7 +33,8 @@ func TestParse(t *testing.T) {
 						},
 					},
 				},
-				"staging": &Environment{
+				&Environment{
+					Name: "staging",
 					Apps: []*Application{
 						&Application{Name: "my-app-1",
 							Services: []*Service{
@@ -41,7 +43,8 @@ func TestParse(t *testing.T) {
 						},
 					},
 				},
-				"production": &Environment{
+				&Environment{
+					Name: "production",
 					Apps: []*Application{
 						&Application{Name: "my-app-1",
 							Services: []*Service{

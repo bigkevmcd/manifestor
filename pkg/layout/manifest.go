@@ -2,11 +2,12 @@ package layout
 
 // Manifest describes a set of environments, apps and services for deployment.
 type Manifest struct {
-	Environments map[string]*Environment `yaml:"environments"`
+	Environments []*Environment `yaml:"environments"`
 }
 
 // Environment is a slice of Apps, these are the named apps in the namespace.
 type Environment struct {
+	Name string         `yaml:"name"`
 	Apps []*Application `yaml:"apps"`
 }
 
@@ -26,13 +27,19 @@ type Repository struct {
 	Path      string `yaml:"path"`
 }
 
-type serviceVisitor func(string, *Application, *Service) error
-
-func (m Manifest) Walk(visitor serviceVisitor) error {
-	for envName, env := range m.Environments {
+func (m Manifest) Walk(visitor ManifestVisitor) error {
+	for _, env := range m.Environments {
+		err := visitor.Environment(env)
+		if err != nil {
+			return err
+		}
 		for _, app := range env.Apps {
+			err := visitor.Application(env, app)
+			if err != nil {
+				return err
+			}
 			for _, svc := range app.Services {
-				err := visitor(envName, app, svc)
+				err := visitor.Service(env, app, svc)
 				if err != nil {
 					return err
 				}

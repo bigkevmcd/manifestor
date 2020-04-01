@@ -13,11 +13,11 @@ import (
 // starting with the prefix.
 func Bootstrap(prefix string, m *Manifest) error {
 	appNames := []string{}
-	for envName, env := range m.Environments {
+	for _, env := range m.Environments {
 		for _, app := range env.Apps {
 			serviceNames := []string{}
 			for _, svc := range app.Services {
-				servicePath := filepath.Join(envName, "services", svc.Name)
+				servicePath := filepath.Join(env.Name, "services", svc.Name)
 				for f, v := range filesForService() {
 					filename := filepath.Join(servicePath, f)
 					err := writeWithPrefix(prefix, filename, v)
@@ -27,7 +27,7 @@ func Bootstrap(prefix string, m *Manifest) error {
 				}
 			}
 			for k, v := range appKustomization(serviceNames) {
-				filename := filepath.Join(envName, "apps", app.Name, k)
+				filename := filepath.Join(env.Name, "apps", app.Name, k)
 				err := writeWithPrefix(prefix, filename, v)
 				if err != nil {
 					return err
@@ -36,7 +36,7 @@ func Bootstrap(prefix string, m *Manifest) error {
 			appNames = append(appNames, app.Name)
 		}
 		for k, v := range environmentFiles(appNames) {
-			filename := filepath.Join(envName, "env", k)
+			filename := filepath.Join(env.Name, "env", k)
 			err := writeWithPrefix(prefix, filename, v)
 			if err != nil {
 				return err

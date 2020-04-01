@@ -1,5 +1,5 @@
 environments:
-  development:
+  - name: development
     pipelines:
       integration: dev-ci-pipeline
       deployment: dev-cd-pipeline
@@ -15,12 +15,12 @@ environments:
       - name: my-app-2
         services:
           - name: app-2-service
-  staging:
+  - name: staging
     apps:
       - name: my-app-1
         services:
           - name: app-1-service-http
-  production:
+  - name: production
     apps:
       - name: my-app-1
         services:
