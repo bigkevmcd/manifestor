@@ -9,41 +9,59 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Bootstrap takes a manifest and a prefix, and writes the files from the manifest
-// starting with the prefix.
-func Bootstrap(prefix string, m *Manifest) error {
-	appNames := []string{}
-	for _, env := range m.Environments {
-		for _, app := range env.Apps {
-			serviceNames := []string{}
-			for _, svc := range app.Services {
-				servicePath := filepath.Join(env.Name, "services", svc.Name)
-				for f, v := range filesForService() {
-					filename := filepath.Join(servicePath, f)
-					err := writeWithPrefix(prefix, filename, v)
-					if err != nil {
-						return err
-					}
-				}
-			}
-			for k, v := range appKustomization(serviceNames) {
-				filename := filepath.Join(env.Name, "apps", app.Name, k)
-				err := writeWithPrefix(prefix, filename, v)
-				if err != nil {
-					return err
-				}
-			}
-			appNames = append(appNames, app.Name)
+type bootstrapVisitor struct {
+	prefix      string
+	appServices map[string][]string
+	envApps     map[string][]string
+}
+
+func (bv *bootstrapVisitor) Service(env *Environment, app *Application, svc *Service) error {
+	servicePath := filepath.Join(env.Name, "services", svc.Name)
+	for f, v := range filesForService() {
+		filename := filepath.Join(servicePath, f)
+		err := writeWithPrefix(bv.prefix, filename, v)
+		if err != nil {
+			return err
 		}
-		for k, v := range environmentFiles(appNames) {
-			filename := filepath.Join(env.Name, "env", k)
-			err := writeWithPrefix(prefix, filename, v)
-			if err != nil {
-				return err
-			}
+	}
+	if bv.appServices[app.Name] == nil {
+		bv.appServices[app.Name] = []string{}
+	}
+	bv.appServices[app.Name] = append(bv.appServices[app.Name], svc.Name)
+	return nil
+}
+
+func (bv *bootstrapVisitor) Application(env *Environment, app *Application) error {
+	for k, v := range appKustomization(bv.appServices[app.Name]) {
+		filename := filepath.Join(env.Name, "apps", app.Name, k)
+		err := writeWithPrefix(bv.prefix, filename, v)
+		if err != nil {
+			return err
+		}
+	}
+	if bv.envApps[env.Name] == nil {
+		bv.envApps[env.Name] = []string{}
+	}
+	bv.envApps[env.Name] = append(bv.envApps[env.Name], app.Name)
+	return nil
+}
+
+func (bv *bootstrapVisitor) Environment(env *Environment) error {
+	for k, v := range environmentFiles(bv.envApps[env.Name]) {
+		filename := filepath.Join(env.Name, "env", k)
+		err := writeWithPrefix(bv.prefix, filename, v)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
+}
+
+// Bootstrap takes a manifest and a prefix, and writes the files from the manifest
+// starting with the prefix.
+func Bootstrap(prefix string, m *Manifest) error {
+	bv := &bootstrapVisitor{prefix: prefix, appServices: make(map[string][]string), envApps: make(map[string][]string)}
+	return m.Walk(bv)
 }
 
 func writeWithPrefix(prefix, filename string, v interface{}) error {
