@@ -2,6 +2,7 @@ package argoapps
 
 import (
 	"fmt"
+	"path/filepath"
 
 	argoappv1 "github.com/argoproj/argo-cd/pkg/apis/application/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,19 +24,22 @@ var (
 	}
 )
 
-const defaultServer = "https://kubernetes.default.svc"
+const (
+	defaultServer  = "https://kubernetes.default.svc"
+	defaultProject = "default"
+)
 
-func GenerateArgoApplications(repoURL string, m *layout.Manifest) []*argoappv1.Application {
-	l, _ := extractServices(m)
-	apps := make([]*argoappv1.Application, len(l))
-	for i, s := range l {
-		apps[i] = makeApplication(s.AppName, "default", s.Environment, defaultServer, repoURL, s.Path)
+func GenerateArgoApplications(repoURL string, m *layout.Manifest) ([]*argoappv1.Application, error) {
+	l := &visitor{applications: []*argoappv1.Application{}, repoURL: repoURL}
+	err := m.Walk(l)
+	if err != nil {
+		return nil, err
 	}
-	return apps
+	return l.applications, nil
 }
 
 // TODO: structure these arguments a bit better.
-func makeApplication(appName, project, ns, server, repoURL, path string) *argoappv1.Application {
+func makeApplication(appName, project, ns, server string, source argoappv1.ApplicationSource) *argoappv1.Application {
 	return &argoappv1.Application{
 		TypeMeta: applicationTypeMeta,
 		ObjectMeta: metav1.ObjectMeta{
@@ -47,40 +51,48 @@ func makeApplication(appName, project, ns, server, repoURL, path string) *argoap
 				Namespace: ns,
 				Server:    server,
 			},
-			Source: argoappv1.ApplicationSource{
-				RepoURL: repoURL,
-				Path:    path,
-			},
+			Source:     source,
 			SyncPolicy: syncPolicy,
 		},
 	}
 }
 
-type serviceVisitor struct {
-	services []service
+type visitor struct {
+	repoURL      string
+	applications []*argoappv1.Application
 }
 
-func (ev *serviceVisitor) Service(env *layout.Environment, app *layout.Application, svc *layout.Service) error {
-	ev.services = append(ev.services, service{fmt.Sprintf("%s-%s", app.Name, svc.Name), layout.PathForService(env, app, svc), env.Name})
+func (sv *visitor) Service(env *layout.Environment, app *layout.Application, svc *layout.Service) error {
+	newApp := makeApplication(
+		fmt.Sprintf("%s-%s", app.Name, svc.Name),
+		defaultProject,
+		env.Name,
+		defaultServer,
+		sv.makeSource(env, app, svc),
+	)
+	sv.applications = append(sv.applications, newApp)
 	return nil
 }
 
-func (ev *serviceVisitor) Application(env *layout.Environment, app *layout.Application) error {
+func (sv *visitor) makeSource(env *layout.Environment, app *layout.Application, svc *layout.Service) argoappv1.ApplicationSource {
+	if svc.ConfigRepo == nil {
+		return argoappv1.ApplicationSource{
+			RepoURL: sv.repoURL,
+			Path:    filepath.Join(layout.PathForService(env, app, svc), "base"),
+		}
+	}
+	return argoappv1.ApplicationSource{
+		RepoURL:        svc.ConfigRepo.URL,
+		Path:           svc.ConfigRepo.Path,
+		TargetRevision: svc.ConfigRepo.Ref,
+	}
+
+}
+
+func (sv *visitor) Application(env *layout.Environment, app *layout.Application) error {
 	return nil
 }
 
-func (ev *serviceVisitor) Environment(env *layout.Environment) error {
+func (sv *visitor) Environment(env *layout.Environment) error {
 	return nil
-}
-
-type service struct {
-	AppName     string
-	Path        string
-	Environment string
-}
-
-func extractServices(m *layout.Manifest) ([]service, error) {
-	l := &serviceVisitor{services: []service{}}
-	m.Walk(l)
-	return l.services, nil
 }

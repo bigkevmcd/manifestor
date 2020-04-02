@@ -1,0 +1,15 @@
+environments:
+  - name: dev
+    apps:
+      - name: my-app-1
+        services:
+          - name: service-http
+  - name: production
+    apps:
+      - name: my-app-2
+        services:
+          - name: service-metrics
+            config_repo:
+              url: https://example.com/testing/testing.git
+              ref: master
+              path: config

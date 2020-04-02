@@ -2,6 +2,7 @@ package layout
 
 import (
 	"io"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -15,4 +16,15 @@ func Parse(in io.Reader) (*Manifest, error) {
 		return nil, err
 	}
 	return m, nil
+}
+
+// ParseFile is a wrapper around Parse that accepts a filename, it opens and
+// parses the file, and closes it.
+func ParseFile(filename string) (*Manifest, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return Parse(f)
 }
