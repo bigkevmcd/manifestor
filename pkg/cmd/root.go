@@ -3,50 +3,31 @@ package cmd
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"github.com/bigkevmcd/manifestor/pkg/layout"
 )
 
+var rootCmd *cobra.Command
+
 func init() {
-	cobra.OnInitialize(initConfig)
-}
-
-func makeRootCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "manifestor",
-		Short: "update a repository based on a manifest",
-		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
-			f, err := os.Open(args[0])
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer f.Close()
-
-			m, err := layout.Parse(f)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			err = layout.Bootstrap(args[1], m)
-			if err != nil {
-				log.Fatal(err)
-			}
+	rootCmd = &cobra.Command{
+		Use:           filepath.Base(os.Args[0]),
+		Short:         "manifest operations",
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
 		},
 	}
-	cmd.AddCommand(makeEventListenerCommand())
-	return cmd
-}
-
-func initConfig() {
 	viper.AutomaticEnv()
+	rootCmd.AddCommand(makeEventListenerCommand())
+	rootCmd.AddCommand(makeBootstrapCommand())
 }
 
 func Execute() {
-	if err := makeRootCommand().Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -12,33 +11,33 @@ import (
 	"github.com/bigkevmcd/manifestor/pkg/layout"
 )
 
-func init() {
-	cobra.OnInitialize(initConfig)
-}
-
 func makeEventListenerCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "eventlistener",
+	var eventListenerName string
+	cmd := &cobra.Command{
+		Use:   "eventlistener <manifest file>",
 		Short: "generate an eventlistener",
-		Args:  cobra.MinimumNArgs(2),
-		Run: func(cmd *cobra.Command, args []string) {
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
 			f, err := os.Open(args[0])
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			defer f.Close()
 
 			m, err := layout.Parse(f)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 
 			el := eventlistener.GenerateEventListener(args[1], m)
 			b, err := yaml.Marshal(el)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			fmt.Printf("%s\n", b)
+			return nil
 		},
 	}
+	cmd.Flags().StringVar(&eventListenerName, "eventlistener-name", "default-event-listener", "provide a name for the generate Tekton Triggers EventListener")
+	return cmd
 }
