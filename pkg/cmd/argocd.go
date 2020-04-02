@@ -29,9 +29,10 @@ func makeArgoCDCommand() *cobra.Command {
 				return err
 			}
 
-			fmt.Printf("KEVIN %#v\n", cmd)
-
-			el := argoapps.GenerateArgoApplications(repositoryURL, m)
+			el, err := argoapps.GenerateArgoApplications(repositoryURL, m)
+			if err != nil {
+				return err
+			}
 			b, err := yaml.Marshal(el)
 			if err != nil {
 				return err
