@@ -27,6 +27,7 @@ func GenerateEventListener(n string, m *layout.Manifest) *triggersv1.EventListen
 	}
 }
 
+// TODO: deal with the error here.
 func makeEventListenerTriggers(m *layout.Manifest) []triggersv1.EventListenerTrigger {
 	l, _ := extractServices(m)
 	triggers := make([]triggersv1.EventListenerTrigger, len(l))

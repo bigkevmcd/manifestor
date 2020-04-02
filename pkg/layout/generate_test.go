@@ -11,6 +11,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+func TestPathForService(t *testing.T) {
+	t.Skip()
+}
+
 func TestBootstrap(t *testing.T) {
 	tempDir, cleanup := makeTempDir(t)
 	defer cleanup()

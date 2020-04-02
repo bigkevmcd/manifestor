@@ -15,8 +15,13 @@ type bootstrapVisitor struct {
 	envApps     map[string][]string
 }
 
+// PathForService gives a repo-rooted path within a repository.
+func PathForService(env *Environment, app *Application, svc *Service) string {
+	return filepath.Join(env.Name, "services", svc.Name)
+}
+
 func (bv *bootstrapVisitor) Service(env *Environment, app *Application, svc *Service) error {
-	servicePath := filepath.Join(env.Name, "services", svc.Name)
+	servicePath := PathForService(env, app, svc)
 	for f, v := range filesForService() {
 		filename := filepath.Join(servicePath, f)
 		err := writeWithPrefix(bv.prefix, filename, v)

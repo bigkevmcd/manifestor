@@ -3,10 +3,11 @@ package eventlistener
 import (
 	"testing"
 
-	"github.com/bigkevmcd/manifestor/pkg/layout"
 	"github.com/google/go-cmp/cmp"
 	triggersv1 "github.com/tektoncd/triggers/pkg/apis/triggers/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/bigkevmcd/manifestor/pkg/layout"
 )
 
 var testManifest = &layout.Manifest{
