@@ -1,0 +1,50 @@
+environments:
+  - name: demo-cicd-environment
+    pipeline_environment: true
+    imports:
+      tasks:
+        - url: https://github.com/tektoncd/catalog/git.yaml
+          ref: cdaf123
+  - name: demo-argocd-environment
+    argocd_environment: true
+  - name: dev
+    namespace: km-production-us-east-1
+    cluster: https://km.cluster.svc.local:8000
+    pipelines:
+      integration:
+        template: dev-ci-template
+        binding: test-ci-binding
+      deployment:
+        template: dev-cd-template
+        binding: dev-cd-binding
+    apps:
+      - name: my-app-1
+        services:
+          - name: app-1-service-http
+            source_url: https://github.com/myproject/myservice.git
+          - name: app-1-service-metrics
+            pipelines:
+              integration:
+                template: java-ci-template
+                binding: java-ci-binding
+              deployment:
+                template: java-cd-template
+                binding: java-cd-binding
+      - name: my-app-2
+        services:
+          - name: app-2-service
+  - name: staging
+    apps:
+      - name: my-app-1
+        services:
+          - name: app-1-service-http
+  - name: production
+    apps:
+      - name: my-app-1
+        services:
+          - name: app-1-service-http
+          - name: app-1-service-metrics
+            config_repo:
+              url: https://github.com/testing/testing
+              ref: production
+              path: config
