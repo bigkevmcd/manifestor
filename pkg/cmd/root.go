@@ -15,7 +15,6 @@ func init() {
 	rootCmd = &cobra.Command{
 		Use:           filepath.Base(os.Args[0]),
 		Short:         "manifest operations",
-		SilenceUsage:  true,
 		SilenceErrors: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()

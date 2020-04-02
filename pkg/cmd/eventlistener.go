@@ -29,7 +29,7 @@ func makeEventListenerCommand() *cobra.Command {
 				return err
 			}
 
-			el := eventlistener.GenerateEventListener(args[1], m)
+			el := eventlistener.GenerateEventListener(eventListenerName, m)
 			b, err := yaml.Marshal(el)
 			if err != nil {
 				return err

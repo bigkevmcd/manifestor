@@ -33,11 +33,13 @@ func makeArgoCDCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			b, err := yaml.Marshal(el)
-			if err != nil {
-				return err
+			for _, e := range el {
+				b, err := yaml.Marshal(e)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("%s---\n", b)
 			}
-			fmt.Printf("%s\n", b)
 			return nil
 		},
 	}
