@@ -24,6 +24,7 @@ func init() {
 	viper.AutomaticEnv()
 	rootCmd.AddCommand(makeEventListenerCommand())
 	rootCmd.AddCommand(makeBootstrapCommand())
+	rootCmd.AddCommand(makeArgoCDCommand())
 }
 
 func Execute() {
