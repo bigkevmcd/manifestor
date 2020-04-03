@@ -62,24 +62,30 @@ type TemplateBinding struct {
 //
 // The environments are sorted using a custom sorting mechanism, that orders by
 // name, but, moves CICD environments to the bottom of the list.
-func (m Manifest) Walk(visitor ManifestVisitor) error {
+func (m Manifest) Walk(visitor interface{}) error {
 	sort.Sort(byName(m.Environments))
 	for _, env := range m.Environments {
 		for _, app := range env.Apps {
 			for _, svc := range app.Services {
-				err := visitor.Service(env, app, svc)
+				if v, ok := visitor.(ServiceVisitor); ok {
+					err := v.Service(env, app, svc)
+					if err != nil {
+						return err
+					}
+				}
+			}
+			if v, ok := visitor.(ApplicationVisitor); ok {
+				err := v.Application(env, app)
 				if err != nil {
 					return err
 				}
 			}
-			err := visitor.Application(env, app)
-			if err != nil {
-				return err
-			}
 		}
-		err := visitor.Environment(env)
-		if err != nil {
-			return err
+		if v, ok := visitor.(EnvironmentVisitor); ok {
+			err := v.Environment(env)
+			if err != nil {
+				return nil
+			}
 		}
 	}
 	return nil
