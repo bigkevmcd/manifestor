@@ -47,7 +47,7 @@ func extractRepo(u string) (string, error) {
 		return "", err
 	}
 	parts := strings.Split(parsed.Path, "/")
-	return fmt.Sprintf("%s/%s", parts[1], parts[2]), nil
+	return fmt.Sprintf("%s/%s", parts[1], strings.TrimSuffix(parts[2], ".git")), nil
 }
 
 func (ev *serviceVisitor) Service(env *layout.Environment, app *layout.Application, svc *layout.Service) error {

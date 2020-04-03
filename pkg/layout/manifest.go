@@ -1,5 +1,9 @@
 package layout
 
+import (
+	"sort"
+)
+
 // Manifest describes a set of environments, apps and services for deployment.
 type Manifest struct {
 	Environments []*Environment `yaml:"environments"`
@@ -10,6 +14,10 @@ type Environment struct {
 	Name      string         `yaml:"name"`
 	Pipelines *Pipelines     `yaml:"pipelines"`
 	Apps      []*Application `yaml:"apps"`
+}
+
+func (e Environment) GoString() string {
+	return e.Name
 }
 
 // Application has many services.
@@ -51,7 +59,11 @@ type TemplateBinding struct {
 //
 // Every App, Service and Environment is called once, and any error from the
 // handling function terminates the Walk.
+//
+// The environments are sorted using a custom sorting mechanism, that orders by
+// name, but, moves CICD environments to the bottom of the list.
 func (m Manifest) Walk(visitor ManifestVisitor) error {
+	sort.Sort(byName(m.Environments))
 	for _, env := range m.Environments {
 		for _, app := range env.Apps {
 			for _, svc := range app.Services {
@@ -71,4 +83,15 @@ func (m Manifest) Walk(visitor ManifestVisitor) error {
 		}
 	}
 	return nil
+}
+
+type byName []*Environment
+
+func (a byName) Len() int      { return len(a) }
+func (a byName) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a byName) Less(i, j int) bool {
+	if a[j].Name == "cicd" {
+		return true
+	}
+	return a[i].Name < a[j].Name
 }
