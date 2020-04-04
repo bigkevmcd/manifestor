@@ -43,23 +43,24 @@ environments:
   - name: staging
     apps:
       - name: my-app-1
-        services:
-          - name: app-1-service-http
-  - name: production
-    apps:
-      - name: my-app-1
-        services:
-          - name: app-1-service-http
-          - name: app-1-service-metrics
             # the "config_repo" property is an upstream reference to
             # configuration in another repository.
             #
+            # Given that the unit of deployment is the Application,
+            # this implies that Applications with an upstream configuration
+            # have no services.
             # This is used by the ArgoCD creation to drive deployments of
             # configuration from this repository.
             config_repo:
               url: https://github.com/testing/testing
               ref: master
               path: config
+
+  - name: production
+    apps:
+      - name: my-app-1
+        services:
+          - name: app-1-service-http
 ```
 
 ## Pipelines
