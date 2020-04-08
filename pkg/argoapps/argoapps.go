@@ -86,13 +86,4 @@ func (sv *visitor) makeSource(env *layout.Environment, app *layout.Application, 
 		Path:           svc.ConfigRepo.Path,
 		TargetRevision: svc.ConfigRepo.Ref,
 	}
-
-}
-
-func (sv *visitor) Application(env *layout.Environment, app *layout.Application) error {
-	return nil
-}
-
-func (sv *visitor) Environment(env *layout.Environment) error {
-	return nil
 }

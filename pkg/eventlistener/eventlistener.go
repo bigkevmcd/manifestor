@@ -62,14 +62,6 @@ func (ev *serviceVisitor) Service(env *layout.Environment, app *layout.Applicati
 	return nil
 }
 
-func (ev *serviceVisitor) Application(env *layout.Environment, app *layout.Application) error {
-	return nil
-}
-
-func (ev *serviceVisitor) Environment(env *layout.Environment) error {
-	return nil
-}
-
 type service struct {
 	RepoName string
 	Name     string
